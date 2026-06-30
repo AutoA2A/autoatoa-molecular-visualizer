@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分子比对</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="比较多个分子结构的相似度与差异，提供结构叠合与比对结果分析"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="分子比对"><meta property="og:description" content="比较多个分子结构的相似度与差异，提供结构叠合与比对结果分析"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="分子比对"><meta name="twitter:description" content="比较多个分子结构的相似度与差异，提供结构叠合与比对结果分析"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"分子比对","description":"比较多个分子结构的相似度与差异，提供结构叠合与比对结果分析","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<section style='margin-bottom: 16px;'><h2 style='margin-top: 0;'>分子比对</h2>
+<div class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'>
+    <h3>上传两个分子文件（PDB 格式）</h3>
+    <div style='margin-bottom:12px;'>
+        <label>分子 A：</label><br>
+        <input type='file' id='fileA' accept='.pdb,.txt' style='width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;'>
+    </div>
+    <div style='margin-bottom:12px;'>
+        <label>分子 B：</label><br>
+        <input type='file' id='fileB' accept='.pdb,.txt' style='width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;'>
+    </div>
+    <button id='cmpBtn' style='background-color:#3498db;color:white;border:none;padding:8px 16px;font-size:16px;cursor:pointer;border-radius:4px;'>开始比对</button>
+    <div id='result' style='margin-top:16px;padding:12px;background:#f9f9f9;border-radius:4px;display:none;'>
+        <p>相似度（RMSD）：<span id='rmsdVal'>—</span> Å</p>
+        <p>匹配原子数：<span id='matchVal'>—</span></p>
+    </div>
+    <div id='svgContainer' style='margin-top:16px;text-align:center;'></div>
+</div>
+</section>
+
+<script>
+function parsePDB(text){
+    const lines = text.split('\n');
+    const atoms = [];
+    for(const line of lines){
+        if(line.startsWith('ATOM') || line.startsWith('HETATM')){
+            // columns: x 31-38, y 39-46, z 47-54 (1-indexed)
+            const x = parseFloat(line.substring(30,38));
+            const y = parseFloat(line.substring(38,46));
+            const z = parseFloat(line.substring(46,54));
+            const elem = line.substring(76,78).trim() || line.substring(12,16).trim()[0];
+            if(!isNaN(x)&&!isNaN(y)&&!isNaN(z)){
+                atoms.push({x,y,z,elem});
+            }
+        }
+    }
+    return atoms;
+}
+function centroid(atoms){
+    const n = atoms.length;
+    let sx=0,sy=0,sz=0;
+    for(const a of atoms){ sx+=a.x; sy+=a.y; sz+=a.z; }
+    return {x:sx/n, y:sy/n, z:sz/n};
+}
+function rmsdAfterTranslate(a,b){
+    // assume same length and order
+    const n = a.length;
+    let sum=0;
+    for(let i=0;i<n;i++){
+        const dx = a[i].x - b[i].x;
+        const dy = a[i].y - b[i].y;
+        const dz = a[i].z - b[i].z;
+        sum+=dx*dx+dy*dy+dz*dz;
+    }
+    return Math.sqrt(sum/n);
+}
+function alignAndCompute(fileAText, fileBText){
+    const A = parsePDB(fileAText);
+    const B = parsePDB(fileBText);
+    if(A.length===0 || B.length===0){ return {rmsd:NaN, match:0, A:[], B:[]}; }
+    // make same length by truncating to shorter
+    const len = Math.min(A.length,B.length);
+    const Aslice = A.slice(0,len);
+    const Bslice = B.slice(0,len);
+    const centA = centroid(Aslice);
+    const centB = centroid(Bslice);
+    // translate both to origin
+    const At = Aslice.map(a=>({x:a.x-centA.x, y:a.y-centA.y, z:a.z-centA.z-centA.z, elem:a.elem}));
+    const Bt = Bslice.map(b=>({x:b.x-centB.x, y:b.y-centB.y, z:b.z-centB.z, elem:b.elem}));
+    const rmsd = rmsdAfterTranslate(At,Bt);
+    // match atoms within 1.0 Å after translation
+    let match=0;
+    const tol=1.0;
+    for(let i=0;i<len;i++){
+        const dx = At[i].x - Bt[i].x;
+        const dy = At[i].y - Bt[i].y;
+        const dz = At[i].z - Bt[i].z;
+        if(Math.sqrt(dx*dx+dy*dy+dz*dz) <= tol) match++;
+    }
+    return {rmsd, match, A:At, B:Bt};
+}
+document.getElementById('cmpBtn').onclick = async ()=>{
+    const fileA = document.getElementById('fileA').files[0];
+    const fileB = document.getElementById('fileB').files[0];
+    if(!fileA || !fileB){ alert('请先选择两个文件'); return; }
+    const textA = await fileA.text();
+    const textB = await fileB.text();
+    const res = alignAndCompute(textA,textB);
+    document.getElementById('rmsdVal').textContent = res.rmsd.toFixed(3);
+    document.getElementById('matchVal').textContent = res.match;
+    document.getElementById('result').style.display = 'block';
+    // draw SVG
+    const container = document.getElementById('svgContainer');
+    container.innerHTML = '';
+    if(res.A.length===0){ container.textContent='无法解析原子坐标'; return; }
+    const width = 500, height = 300, padding = 40;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width',width);
+    svg.setAttribute('height',height);
+    svg.setAttribute('style','border:1px solid #ccc;');
+    // find bounds
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    [...res.A,...res.B].forEach(p=>{
+        if(p.x<minX) minX=p.x;
+        if(p.x>maxX) maxX=p.x;
+        if(p.y<minY) minY=p.y;
+        if(p.y>maxY) maxY=p.y;
+    });
+    const rangeX = maxX-minX || 1;
+    const rangeY = maxY-minY || 1;
+    const scaleX = (width-2*padding)/rangeX;
+    const scaleY = (height-2*padding)/rangeY;
+    const scale = Math.min(scaleX,scaleY);
+    const cx = width/2 - scale*(minX+maxX)/2;
+    const cy = height/2 - scale*(minY+maxY)/2;
+    function trans(p){ return {x:cx+scale*p.x, y:cy+scale*p.y}; }
+    // draw bonds (simplistic: connect sequential atoms)
+    function drawPath(atoms,color){
+        if(atoms.length<2) return;
+        const polyline = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+        const points = atoms.map(p=>`${trans(p).x},${trans(p).y}`).join(' ');
+        polyline.setAttribute('points',points);
+        polyline.setAttribute('fill','none');
+        polyline.setAttribute('stroke',color);
+        polyline.setAttribute('stroke-width',2);
+        svg.appendChild(polyline);
+    }
+    drawPath(res.A,'#3498db'); // blue
+    drawPath(res.B,'#e74c3c'); // red
+    // draw atoms
+    [...res.A,...res.B].forEach((p,i)=>{
+        const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        const t = trans(p);
+        circle.setAttribute('cx',t.x);
+        circle.setAttribute('cy',t.y);
+        circle.setAttribute('r',4);
+        circle.setAttribute('fill', i<res.A.length ? '#3498db' : '#e74c3c');
+        svg.appendChild(circle);
+    });
+    container.appendChild(svg);
+};
+</script>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
