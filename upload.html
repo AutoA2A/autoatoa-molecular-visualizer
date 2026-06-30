@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分子上传</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="支持PDB、SDF、MOL2等格式文件上传，解析后跳转到查看器显示"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="分子上传"><meta property="og:description" content="支持PDB、SDF、MOL2等格式文件上传，解析后跳转到查看器显示"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="分子上传"><meta name="twitter:description" content="支持PDB、SDF、MOL2等格式文件上传，解析后跳转到查看器显示"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"分子上传","description":"支持PDB、SDF、MOL2等格式文件上传，解析后跳转到查看器显示","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'>
+<h2>分子上传</h2>
+<p>将 PDB / SDF / MOL2 文件拖放到这里，或点击选择</p>
+<input type="file" id="fileInput" accept=".pdb,.sdf,.mol2" style="display:none;">
+<div id="dropArea" style="border:2px dashed #ddd;border-radius:6px;padding:30px;text-align:center;background:#fafafa;margin:16px 0;">
+点击或拖放文件到这里
+</div>
+<button id="uploadBtn" style="background-color:#3498db;color:#fff;border:none;padding:8px 16px;font-size:16px;cursor:pointer;border-radius:4px;" disabled>解析并查看</button>
+<div id="status" style="margin-top:16px;min-height:1.2rem;color:#333;white-space:pre-wrap;"></div>
+</article>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const dropArea = document.getElementById('dropArea');
+const uploadBtn = document.getElementById('uploadBtn');
+const statusDiv = document.getElementById('status');
+
+let selectedFile = null;
+
+// ---------- 文件选择 ----------
+function handleFiles(files) {
+ if (files.length === 0) return;
+ selectedFile = files[0];
+ statusDiv.textContent = `已选择 ${selectedFile.name}`;
+ uploadBtn.disabled = false;
+}
+
+// 拖放交互
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+ dropArea.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+});
+['dragenter', 'dragover'].forEach(evt => {
+ dropArea.addEventListener(evt, () => { dropArea.style.background = '#e0f7fa'; }, false);
+});
+['dragleave', 'drop'].forEach(evt => {
+ dropArea.addEventListener(evt, () => { dropArea.style.background = '#fafafa'; }, false);
+});
+dropArea.addEventListener('drop', e => {
+ const dt = e.dataTransfer;
+ if (dt.files && dt.files.length) handleFiles(dt.files);
+});
+dropArea.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+// ---------- 解析函数 ----------
+function parsePDB(text) {
+ const atoms = [], bonds = [];
+ const lines = text.split(/\r?\n/);
+ for (const line of lines) {
+  if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+   const x = parseFloat(line.substring(30,38).trim());
+   const y = parseFloat(line.substring(38,46).trim());
+   const z = parseFloat(line.substring(46,54).trim());
+   let elem = line.substring(76,78).trim();
+   if (!elem) {
+    const name = line.substring(12,16).trim();
+    elem = name.replace(/[0-9]/g,'');
+   }
+   atoms.push({element: elem || 'C', x, y, z});
+  }
+ }
+ for (let i = 0; i < atoms.length; i++) {
+  for (let j = i+1; j < atoms.length; j++) {
+   const dx = atoms[i].x - atoms[j].x, dy = atoms[i].y - atoms[j].y, dz = atoms[i].z - atoms[j].z;
+   const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
+   if (d < 2.0) bonds.push({i, j, order: 1});
+  }
+ }
+ return {atoms, bonds};
+}
+function parseSDF(text) {
+ const lines = text.split(/\r?\n/);
+ if (lines.length < 4) return {atoms:[], bonds:[]};
+ const countsLine = lines[3];
+ const atomCount = parseInt(countsLine.substring(0,3),10) || 0;
+ const bondCount = parseInt(countsLine.substring(3,6),10) || 0;
+ let pos = 4;
+ const atoms = [];
+ for (let i = 0; i < atomCount; i++) {
+  const parts = lines[pos++].trim().split(/\s+/);
+  const x = parseFloat(parts[0]), y = parseFloat(parts[1]), z = parseFloat(parts[2]);
+  let elem = parts[3];
+  if (!elem || elem.length > 2) elem = elem.replace(/[0-9]/g,'');
+  atoms.push({element: elem || 'C', x, y, z});
+ }
+ const bonds = [];
+ for (let i = 0; i < bondCount; i++) {
+  const parts = lines[pos++].trim().split(/\s+/);
+  const a = parseInt(parts[0]) - 1;
+  const b = parseInt(parts[1]) - 1;
+  let order = parseInt(parts[3]) || 1;
+  if (isNaN(order)) order = 1;
+  bonds.push({i:a, j:b, order});
+ }
+ return {atoms, bonds};
+}
+function parseMOL2(text) {
+ const lines = text.split(/\r?\n/);
+ let atoms = [], bonds = [];
+ let section = null;
+ for (const line of lines) {
+  if (line.startsWith('@<TRIPOS>ATOM')) { section = 'atom'; continue; }
+  if (line.startsWith('@<TRIPOS>BOND')) { section = 'bond'; continue; }
+  if (line.startsWith('@<TRIPOS>')) { section = null; continue; }
+  if (!section) continue;
+  const parts = line.trim().split(/\s+/);
+  if (section === 'atom' && parts.length >= 10) {
+   const x = parseFloat(parts[2]), y = parseFloat(parts[3]), z = parseFloat(parts[4]);
+   const atomType = parts[5];
+   let elem = atomType.replace(/[0-9]/g,'');
+   if (!elem) elem = 'C';
+   atoms.push({element: elem, x, y, z});
+  } else if (section === 'bond' && parts.length >= 4) {
+   const a = parseInt(parts[1]) - 1;
+   const b = parseInt(parts[2]) - 1;
+   let order = 1;
+   const type = parts[3];
+   if (type === '2' || type === 'du' || type === 'double') order = 2;
+   else if (type === '3' || type === 'tr' || type === 'triple') order = 3;
+   else if (type === 'am' || type === 'ar') order = 1; // aromatic treated as single
+   bonds.push({i:a, j:b, order});
+  }
+ }
+ return {atoms, bonds};
+}
+
+// ---------- 上传按钮 ----------
+uploadBtn.addEventListener('click', () => {
+ if (!selectedFile) return;
+ statusDiv.textContent = `正在解析 ${selectedFile.name}...`;
+ const reader = new FileReader();
+ reader.onload = e => {
+  const text = e.target.result;
+  const ext = selectedFile.name.split('.').pop().toLowerCase();
+  let result;
+  if (ext === 'pdb') result = parsePDB(text);
+  else if (ext === 'sdf') result = parseSDF(text);
+  else if (ext === 'mol2') result = parseMOL2(text);
+  else {
+   statusDiv.textContent = '不支持的文件格式';
+   return;
+  }
+  const id = Math.random().toString(36).substring(2,10);
+  sessionStorage.setItem(id, JSON.stringify(result));
+  window.location = `viewer.html?id=${id}`;
+ };
+ reader.onerror = () => { statusDiv.textContent = '读取文件失败'; };
+ reader.readAsText(selectedFile);
+});
+</script>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
