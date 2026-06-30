@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渲染设置</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="调整背景颜色、光源、原子半径、键粗细、配色方案等渲染参数，支持实时预览调整效果"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="渲染设置"><meta property="og:description" content="调整背景颜色、光源、原子半径、键粗细、配色方案等渲染参数，支持实时预览调整效果"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="渲染设置"><meta name="twitter:description" content="调整背景颜色、光源、原子半径、键粗细、配色方案等渲染参数，支持实时预览调整效果"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"渲染设置","description":"调整背景颜色、光源、原子半径、键粗细、配色方案等渲染参数，支持实时预览调整效果","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<h2>渲染设置</h2>
+<a href="viewer.html" class="btn">查看模型</a>
+
+<div class="card">
+<h3>背景颜色</h3>
+<input type="color" id="bgColor" value="#ffffff">
+</div>
+
+<div class="card">
+<h3>光源颜色</h3>
+<input type="color" id="lightColor" value="#ffffff">
+</div>
+
+<div class="card">
+<h3>光源方向（仰角）</h3>
+<input type="range" id="lightElev" min="-90" max="90" value="45">
+<span id="lightElevVal">45°</span>
+</div>
+
+<div class="card">
+<h3>原子半径缩放</h3>
+<input type="range" id="atomRadius" min="0.5" max="3" step="0.1" value="1">
+<span id="atomRadiusVal">1.0</span>
+</div>
+
+<div class="card">
+<h3>键粗细缩放</h3>
+<input type="range" id="bondWidth" min="0.5" max="5" step="0.1" value="1">
+<span id="bondWidthVal">1.0</span>
+</div>
+
+<div class="card">
+<h3>配色方案</h3>
+<select id="colorScheme">
+<option value="cpk">CPK 颜色</option>
+<option value="uniform">统一颜色</option>
+</select>
+</div>
+
+<div class="card">
+<h3>预览</h3>
+<canvas id="previewCanvas" width="300" height="200"></canvas>
+</div>
+
+<button class="primary" id="applyBtn">应用设置并保存</button>
+
+<script>
+// 默认设置
+const DEFAULT_SETTINGS = {
+bgColor: "#ffffff",
+lightColor: "#ffffff",
+lightElev: 45,   // degrees
+atomRadius: 1.0,
+bondWidth: 1.0,
+colorScheme: "cpk"
+};
+
+// 元素颜色（CPK）
+const elementColors = {
+H: "#ffffff",
+C: "#000000",
+O: "#ff0000",
+N: "#0000ff",
+S: "#ffff00",
+P: "#ff8800",
+Cl: "#00ff00"
+};
+
+// 简单分子：乙醇 C2H6O（二维坐标，已归一化到 -1~1）
+const atoms = [
+{element:"C", x:-0.6, y: 0.0},
+{element:"C", x: 0.2, y: 0.0},
+{element:"O", x: 0.9, y: 0.0},
+{element:"H", x:-0.9, y:-0.4},
+{element:"H", x:-0.9, y: 0.4},
+{element:"H", x:-0.3, y:-0.4},
+{element:"H", x:-0.3, y: 0.4},
+{element:"H", x: 0.5, y:-0.4},
+{element:"H", x: 0.5, y: 0.4},
+{element:"H", x: 1.2, y:-0.3},
+{element:"H", x: 1.2, y: 0.3}
+];
+const bonds = [
+[0,1],[1,2], // C-C-O backbone
+[0,3],[0,4], // H on first C
+[0,5],[0,6],
+[1,7],[1,8], // H on second C
+[1,9],[1,10],
+[2,11],[2,12] // H on O (actually OH, but we add two H for simplicity)
+];
+
+// DOM 元素
+const bgColorInput = document.getElementById('bgColor');
+const lightColorInput = document.getElementById('lightColor');
+const lightElevInput = document.getElementById('lightElev');
+const lightElevVal = document.getElementById('lightElevVal');
+const atomRadiusInput = document.getElementById('atomRadius');
+const atomRadiusVal = document.getElementById('atomRadiusVal');
+const bondWidthInput = document.getElementById('bondWidth');
+const bondWidthVal = document.getElementById('bondWidthVal');
+const colorSchemeSelect = document.getElementById('colorScheme');
+const previewCanvas = document.getElementById('previewCanvas');
+const applyBtn = document.getElementById('applyBtn');
+
+// 从 localStorage 读取或使用默认
+let settings = JSON.parse(localStorage.getItem('molSettings')) || {...DEFAULT_SETTINGS};
+
+// 更新 UI 反映当前设置
+function syncUI(){
+bgColorInput.value = settings.bgColor;
+lightColorInput.value = settings.lightColor;
+lightElevInput.value = settings.lightElev;
+lightElevVal.textContent = settings.lightElev + "°";
+atomRadiusInput.value = settings.atomRadius;
+atomRadiusVal.textContent = settings.atomRadius.toFixed(1);
+bondWidthInput.value = settings.bondWidth;
+bondWidthVal.textContent = settings.bondWidth.toFixed(1);
+colorSchemeSelect.value = settings.colorScheme;
+drawPreview();
+}
+
+// 保存设置
+function saveSettings(){
+localStorage.setItem('molSettings', JSON.stringify(settings));
+}
+
+// 绘制预览
+function drawPreview(){
+const ctx = previewCanvas.getContext('2d');
+const w = previewCanvas.width;
+const h = previewCanvas.height;
+
+// 背景
+ctx.fillStyle = settings.bgColor;
+ctx.fillRect(0,0,w,h);
+
+// 键
+ctx.strokeStyle = settings.colorScheme === 'uniform' ? settings.lightColor : '#555';
+ctx.lineWidth = settings.bondWidth * 6;
+bonds.forEach(([i,j])=>{
+const a1 = atoms[i];
+const a2 = atoms[j];
+const x1 = map(a1.x, -1, 1, 0, w);
+const y1 = map(a1.y, -1, 1, h, 0);
+const x2 = map(a2.x, -1, 1, 0, w);
+const y2 = map(a2.y, -1, 1, h, 0);
+ctx.beginPath();
+ctx.moveTo(x1, y1);
+ctx.lineTo(x2, y2);
+ctx.stroke();
+});
+
+// 原子
+atoms.forEach(a=>{
+const x = map(a.x, -1, 1, 0, w);
+const y = map(a.y, -1, 1, h, 0);
+const radius = settings.atomRadius * 20;
+ctx.beginPath();
+ctx.arc(x, y, radius, 0, Math.PI*2);
+const fill = settings.colorScheme === 'cpk' ? (elementColors[a.element] || '#ffffff') : settings.lightColor || '#ffffff';
+ctx.fillStyle = fill;
+ctx.fill();
+ctx.strokeStyle = '#000';
+ctx.lineWidth = 1;
+ctx.stroke();
+});
+}
+
+// 辅助映射函数
+function map(v, min1, max1, min2, max2){
+return ((v - min1) / (max1 - min1)) * (max2 - min2) + min2;
+}
+
+// 事件绑定
+bgColorInput.addEventListener('input',()=>{settings.bgColor = bgColorInput.value; saveSettings(); drawPreview();});
+lightColorInput.addEventListener('input',()=>{settings.lightColor = lightColorInput.value; saveSettings(); drawPreview();});
+lightElevInput.addEventListener('input',()=>{settings.lightElev = parseInt(lightElevInput.value); lightElevVal.textContent = settings.lightElev + "°"; saveSettings();}); // 光源方向在2D预览中不使用，仅保存
+atomRadiusInput.addEventListener('input',()=>{settings.atomRadius = parseFloat(atomRadiusInput.value); atomRadiusVal.textContent = settings.atomRadius.toFixed(1); saveSettings(); drawPreview();});
+bondWidthInput.addEventListener('input',()=>{settings.bondWidth = parseFloat(bondWidthInput.value); bondWidthVal.textContent = settings.bondWidth.toFixed(1); saveSettings(); drawPreview();});
+colorSchemeSelect.addEventListener('change',()=>{settings.colorScheme = colorSchemeSelect.value; saveSettings(); drawPreview();});
+applyBtn.addEventListener('click',()=>{alert('设置已保存并将应用于3D查看器');});
+
+// 初始化
+syncUI();
+</script>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
