@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用帮助</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="提供操作教程、常见问题和技术支持文档，补充完善操作指南和FAQ"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="使用帮助"><meta property="og:description" content="提供操作教程、常见问题和技术支持文档，补充完善操作指南和FAQ"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="使用帮助"><meta name="twitter:description" content="提供操作教程、常见问题和技术支持文档，补充完善操作指南和FAQ"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"使用帮助","description":"提供操作教程、常见问题和技术支持文档，补充完善操作指南和FAQ","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'><h2>操作教程</h2><ol>
+<li><strong>打开首页</strong>：访问 <code>index.html</code>，页面即为可直接操作的分子可视化工具。</li>
+<li><strong>加载分子</strong>：
+<ul>
+<li>点击「分子加载」区域的「选择文件」按钮，上传 PDB、SDF、MOL2 等格式文件；</li>
+<li>或使用内置分子下拉菜单选择示例分子，点击「加载选中」按钮。</li>
+</ul>
+</li>
+<li><strong>交互操作</strong>：
+<ul>
+<li>鼠标左键拖动：旋转分子；</li>
+<li>鼠标右键或触控板双指上下滑动：缩放；</li>
+<li>鼠标中键或触控板三指拖动：平移视角。</li>
+</ul>
+</li>
+<li><strong>查看信息</strong>：分子加载后，右侧信息面板会显示分子式、原子数、键数等基本信息。</li>
+<li><strong>功能页面跳转</strong>：使用顶部统一导航栏切换至「查看器」（<code>viewer.html</code>）、「上传」（<code>upload.html</code>）、「分析」（<code>analyze.html</code>）、「设置」（<code>settings.html</code>）、「关于我们」（<code>about.html</code>）等子页，各页均可独立使用。</li>
+</ol></article>
+
+<article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'><h2>常见问题（FAQ）</h2>
+<details>
+<summary>如何上传自己的分子文件？</summary>
+<div class='content' style='padding:10px; line-height:1.6;'>
+在首页或上传页（<code>upload.html</code>）中，点击「选择文件」按钮，选择本地的 PDB、SDF、MOL2 文件，随后点击「加载文件」或「上传并查看」即可。系统会在客户端解析文件并显示分子结构。
+</div>
+</details>
+<details>
+<summary>为什么有些分子显示为黑色或看不到？</summary>
+<div class='content' style='padding:10px; line-height:1.6;'>
+可能是文件格式不受支持或文件损坏。请确保上传的文件为标准的 PDB、SDF 或 MOL2 格式。若仍有问题，可尝试使用内置分子测试是否正常。
+</div>
+</details>
+<details>
+<summary>如何调整分子的显示样式（颜色、光源等）？</summary>
+<div class='content' style='padding:10px; line-height:1.6;'>
+进入「设置」页（<code>settings.html</code>），可修改背景颜色、光源方向、原子半径、键粗细、配色方案等参数，修改后实时生效。
+</div>
+</details>
+<details>
+<summary>是否需要联网才能使用？</summary>
+<div class='content' style='padding:10px; line-height:1.6;'>
+完全不需要。所有页面均为纯前端实现，所有逻辑、计算、渲染均在浏览器端完成，离线也能正常使用。
+</div>
+</details>
+<details>
+<summary>如何导出当前视图为图片？</summary>
+<div class='content' style='padding:10px; line-height:1.6;'>
+目前暂不提供直接导出图片功能，建议使用浏览器的截图工具或页面自带的截图功能保存当前视图。
+</div>
+</details>
+</article>
+
+<article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'><h2>技术支持与反馈</h2>
+<p>若您在使用过程中遇到任何问题，或有功能建议，欢迎通过以下方式反馈：</p>
+<ul>
+<li>邮箱：<a href="mailto:support@autoa2a.org">support@autoa2a.org</a></li>
+<li>在线反馈表单（下方）</li>
+</ul>
+<form id='feedbackForm' style='margin-top:12px;'>
+<div style='margin-bottom:16px;'><label style='display:block; margin-bottom:8px;'>反馈内容</label><textarea id='feedbackMsg' placeholder='请描述您遇到的问题或提出建议...' rows='4' required style='width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;'></textarea></div>
+<button type='submit' style='background-color:#3498db; color:white; border:none; padding:8px 16px; font-size:16px; cursor:pointer; border-radius:4px;'>提交反馈</button>
+</form>
+<p id='feedbackThankyou' style='margin-top:12px;color:green;display:none;'>感谢您的反馈！我们会尽快处理</p>
+</article>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
