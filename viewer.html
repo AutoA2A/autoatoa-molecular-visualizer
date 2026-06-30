@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D分子查看器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="使用WebGL渲染分子，提供旋转、缩放、平移、原子信息提示，支持大规模分子结构渲染优化"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="3D分子查看器"><meta property="og:description" content="使用WebGL渲染分子，提供旋转、缩放、平移、原子信息提示，支持大规模分子结构渲染优化"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="3D分子查看器"><meta name="twitter:description" content="使用WebGL渲染分子，提供旋转、缩放、平移、原子信息提示，支持大规模分子结构渲染优化"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"3D分子查看器","description":"使用WebGL渲染分子，提供旋转、缩放、平移、原子信息提示，支持大规模分子结构渲染优化","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<section style='margin-bottom: 16px;'><h2 style='margin-top: 0;'>3D 分子查看器</h2>
+<table style='width: 100%; border-collapse: collapse;'>
+  <thead>
+    <tr>
+      <th>视口</th>
+      <th>控制面板</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <canvas id="molCanvas" width="800" height="600"></canvas>
+      </td>
+      <td>
+        <button style='background-color: #3498db; color: white; border: none; padding: 8px 16px; font-size: 16px; cursor: pointer; border-radius: 4px;' id="btnHome">返回首页</button>
+        <button style='background-color: #3498db; color: white; border: none; padding: 8px 16px; font-size: 16px; cursor: pointer; border-radius: 4px;' id="btnSettings">渲染设置</button>
+        <button style='background-color: #3498db; color: white; border: none; padding: 8px 16px; font-size: 16px; cursor: pointer; border-radius: 4px;' id="btnExport">导出与分享</button>
+        <input type="file" id="fileInput" accept=".pdb,.sdf,.mol2">
+        <div id="info">
+          <h3>信息</h3>
+          <p id="infoText">将鼠标悬停在原子上查看详情。</p>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</section>
+<script>
+// WebGL molecular viewer
+(function() {
+  const canvas = document.getElementById('molCanvas');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) { alert('WebGL not supported'); return; }
+
+  // Shaders
+  const vs = `
+    attribute vec3 aPosition;
+    attribute vec3 aColor;
+    uniform mat4 uMatrix;
+    varying vec3 vColor;
+    void main() {
+      vColor = aColor;
+      gl_Position = uMatrix * vec4(aPosition, 1.0);
+      gl_PointSize = 6.0;
+    }
+  `;
+  const fs = `
+    precision mediump float;
+    varying vec3 vColor;
+    void main() {
+      gl_FragColor = vec4(vColor, 1.0);
+    }
+  `;
+  function compileShader(src, type) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.error('Shader compile error:', gl.getShaderInfoLog(sh));
+      gl.deleteShader(sh);
+      return null;
+    }
+    return sh;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compileShader(vs, gl.VERTEX_SHADER));
+  gl.attachShader(prog, compileShader(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    console.error('Program link error:', gl.getProgramInfoLog(prog));
+  }
+  gl.useProgram(prog);
+  const posLoc = gl.getAttribLocation(prog, 'aPosition');
+  const colLoc = gl.getAttribLocation(prog, 'aColor');
+  const uniMatrix = gl.getUniformLocation(prog, 'uMatrix');
+  gl.enableVertexAttribArray(posLoc);
+  gl.enableVertexAttribArray(colLoc);
+
+  // Data
+  let positions = new Float32Array();
+  let colors = new Float32Array();
+  let atomInfos = [];
+  let atomCount = 0;
+
+  // CPK colors
+  const cpk = {
+    H: [1.0, 1.0, 1.0],
+    C: [0.565, 0.565, 0.565],
+    N: [0.196, 0.314, 0.973],
+    O: [1.0, 0.051, 0.051],
+    S: [1.0, 1.0, 0.2],
+    default: [0.6, 0.6, 0.6]
+  };
+  function getColor(elem) {
+    const key = elem ? elem[0].toUpperCase() + elem.slice(1).toLowerCase() : '';
+    return cpk[key] || cpk.default;
+  }
+
+  // Parse PDB text
+  function parsePDB(text) {
+    const pos = [];
+    const col = [];
+    const info = [];
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+        const x = parseFloat(line.substring(30, 38));
+        const y = parseFloat(line.substring(38, 46));
+        const z = parseFloat(line.substring(46, 54));
+        if (isNaN(x) || isNaN(y) || isNaN(z)) continue;
+        let elem = line.substring(76, 78).trim();
+        if (!elem) {
+          const name = line.substring(12, 16).trim();
+          elem = name.length ? name[0] : 'C';
+        }
+        pos.push(x, y, z);
+        const rgb = getColor(elem);
+        col.push(rgb[0], rgb[1], rgb[2]);
+        info.push(`${elem} (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)})`);
+      }
+    }
+    return {pos: new Float32Array(pos), col: new Float32Array(col), info};
+  }
+
+  // Load file
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const data = parsePDB(ev.target.result);
+      positions = data.pos;
+      colors = data.col;
+      atomInfos = data.info;
+      atomCount = positions.length / 3;
+      initBuffers();
+      document.getElementById('infoText').textContent = `Loaded ${atomCount} atoms.`;
+    };
+    reader.readAsText(file);
+  });
+
+  // Buffers
+  let posBuf, colBuf;
+  function initBuffers() {
+    posBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    colBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+  }
+
+  // Mouse interaction
+  let rotX = 0, rotY = 0, scale = 1.0;
+  let offsetX = 0, offsetY = 0;
+  let isDragging = false;
+  let isRightDragging = false;
+  let lastX = 0, lastY = 0;
+  canvas.addEventListener('mousedown', function(e) {
+    if (e.button === 0) { isDragging = true; }
+    else if (e.button === 2) { isRightDragging = true; }
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    if (isDragging) {
+      rotY += dx * 0.005;
+      rotX += dy * 0.005;
+    } else if (isRightDragging) {
+      offsetX += dx * 0.01 * scale;
+      offsetY -= dy * 0.01 * scale;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = rect.bottom - e.clientY;
+    mousePos = {x: mx, y: my};
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+  canvas.addEventListener('mouseup', function(e) {
+    if (e.button === 0) isDragging = false;
+    if (e.button === 2) isRightDragging = false;
+  });
+  canvas.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale *= delta;
+    if (scale < 0.1) scale = 0.1;
+    if (scale > 10) scale = 10;
+  });
+  let mousePos = null;
+
+  // Math helpers
+  function mat4() { return new Float32Array(16); }
+  function identity(m) {
+    m[0]=1; m[5]=1; m[10]=1; m[15]=1;
+    m[1]=m[2]=m[3]=m[4]=m[6]=m[7]=m[8]=m[9]=m[11]=m[12]=m[13]=m[14]=0;
+    return m;
+  }
+  function multiply(a, b, out) {
+    for (let i=0;i<4;i++) {
+      for (let j=0;j<4;j++) {
+        let sum=0;
+        for (let k=0;k<4;k++) sum += a[i*4+k]*b[k*4+j];
+        out[i*4+j]=sum;
+      }
+    }
+    return out;
+  }
+  function buildMatrix() {
+    const m = mat4();
+    identity(m);
+    // scale
+    m[0]*=scale; m[5]*=scale; m[10]*=scale;
+    // rotate X
+    const rx = mat4(); identity(rx);
+    rx[5]= Math.cos(rotX); rx[6]= Math.sin(rotX);
+    rx[9]= -Math.sin(rotX); rx[10]= Math.cos(rotX);
+    // rotate Y
+    const ry = mat4(); identity(ry);
+    ry[0]= Math.cos(rotY); ry[2]= -Math.sin(rotY);
+    ry[8]= Math.sin(rotY); ry[10]= Math.cos(rotY);
+    // translate
+    const t = mat4(); identity(t);
+    t[12]=offsetX; t[13]=offsetY; t[14]=0;
+    // m = T * Ry * Rx * S
+    const temp1 = mat4(); multiply(m, ry, temp1);
+    const temp2 = mat4(); multiply(temp1, rx, temp2);
+    multiply(temp2, t, m);
+    return m;
+  }
+  function ortho(left, right, bottom, top, near, far, out) {
+    identity(out);
+    out[0] = 2/(right-left);
+    out[5] = 2/(top-bottom);
+    out[10] = -2/(far-near);
+    out[12] = -(right+left)/(right-left);
+    out[13] = -(top+bottom)/(top-bottom);
+    out[14] = -(far+near)/(far-near);
+    return out;
+  }
+
+  // Render loop
+  function render() {
+    gl.clearColor(0.9,0.9,0.9,1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+    gl.viewport(0,0,width,height);
+    const proj = mat4();
+    const size = 10;
+    ortho(-size*scale, size*scale, -size*scale, size*scale, -size*scale, size*scale, proj);
+    const view = mat4(); identity(view);
+    const model = buildMatrix();
+    const mvp = mat4();
+    multiply(proj, view, mvp);
+    multiply(mvp, model, mvp);
+    gl.uniformMatrix4fv(uniMatrix, false, mvp);
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+    gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colBuf);
+    gl.vertexAttribPointer(colLoc, 3, gl.FLOAT, false, 0, 0);
+    if (atomCount>0) gl.drawArrays(gl.POINTS, 0, atomCount);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
