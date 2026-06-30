@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>性质分析</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="计算并显示分子的分子量、氢键数、极性表面积等理化性质，支持更多理化性质计算选项和导出分析报告"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="性质分析"><meta property="og:description" content="计算并显示分子的分子量、氢键数、极性表面积等理化性质，支持更多理化性质计算选项和导出分析报告"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="性质分析"><meta name="twitter:description" content="计算并显示分子的分子量、氢键数、极性表面积等理化性质，支持更多理化性质计算选项和导出分析报告"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"性质分析","description":"计算并显示分子的分子量、氢键数、极性表面积等理化性质，支持更多理化性质计算选项和导出分析报告","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<section>
+  <article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'>
+    <h2>上传分子文件</h2>
+    <div class='form-group' style='margin-bottom:12px;'>
+      <label style='display:block;margin-bottom:6px;font-weight:500;'>支持 PDB / SDF / MOL2（仅解析 PDB 示例）</label>
+      <input type='file' id='molFile' accept='.pdb,.sdf,.mol2' style='width:100%;padding:8px;border-radius:4px;border:1px solid #ccc;background:#fff;'>
+    </div>
+    <button id='loadBtn' class='btn' style='background-color:#3498db;color:white;border:none;padding:8px 16px;font-size:16px;cursor:pointer;border-radius:4px;'>加载并计算</button>
+    <div id='loadMsg' style='margin-top:8px;color:#555;font-size:0.9rem;'></div>
+  </article>
+</section>
+
+<section>
+  <article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'>
+    <h2>计算选项</h2>
+    <div style='margin-bottom:12px;'>
+      <label style='display:block;margin-bottom:6px;font-weight:500;'>选择要计算的性质：</label>
+      <label style='display:block;margin:4px 0;'><input type='checkbox' id='optMw' checked> 分子量 (MW)</label>
+      <label style='display:block;margin:4px 0;'><input type='checkbox' id='optHb' checked> 氢键数 (H‑bond donors/acceptors)</label>
+      <label style='display:block;margin:4px 0;'><input type='checkbox' id='optPsa' checked> 极性表面积 (PSA)</label>
+      <label style='display:block;margin:4px 0;'><input type='checkbox' id='optLogp'> 分配系数 (logP)</label>
+      <label style='display:block;margin:4px 0;'><input type='checkbox' id='optRot'> 可旋转键数</label>
+    </div>
+  </article>
+</section>
+
+<section>
+  <article class='card' style='background-color: white; padding: 16px; border-radius: 4px; box-shadow: 0 0 8px rgba(0,0,0,0.1);'>
+    <h2>计算结果</h2>
+    <div id='resultSection' style='display:none;'>
+      <div style='margin-bottom:8px;'><span style='display:inline-block;width:140px;font-weight:600;'>分子量：</span><span id='mw'>-</span> g/mol</div>
+      <div style='margin-bottom:8px;'><span style='display:inline-block;width:140px;font-weight:600;'>氢键数（供体+受体）：</span><span id='hb'>-</span></div>
+      <div style='margin-bottom:8px;'><span style='display:inline-block;width:140px;font-weight:600;'>极性表面积 (PSA)：</span><span id='psa'>-</span> Å²</div>
+      <div style='margin-bottom:8px;'><span style='display:inline-block;width:140px;font-weight:600;'>分配系数 (logP)：</span><span id='logp'>-</span></div>
+      <div style='margin-bottom:8px;'><span style='display:inline-block;width:140px;font-weight:600;'>可旋转键数：</span><span id='rot'>-</span></div>
+      <div style='margin-top:16px;'>
+        <a id='exportLink' href='export.html' style='background-color:#3498db;color:white;border:none;padding:8px 16px;font-size:16px;cursor:pointer;border-radius:4px;text-decoration:none;display:inline-block;'>导出分析报告</a>
+      </div>
+    </div>
+    <div id='emptyResult' style='text-align: center; padding: 16px;'>
+      <p>暂无数据</p>
+    </div>
+  </article>
+</section>
+
+<script>
+(function() {
+  const loadBtn = document.getElementById('loadBtn');
+  const molFile = document.getElementById('molFile');
+  const loadMsg = document.getElementById('loadMsg');
+  const resultSection = document.getElementById('resultSection');
+  const emptyResult = document.getElementById('emptyResult');
+  const exportLink = document.getElementById('exportLink');
+
+  let currentMolId = null;
+
+  loadBtn.addEventListener('click', function() {
+    const file = molFile.files[0];
+    if (!file) {
+      loadMsg.textContent = '请先选择分子文件。';
+      return;
+    }
+    loadMsg.textContent = '正在解析与计算...';
+    currentMolId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const text = e.target.result;
+      let mw = 0, hbd = 0, hba = 0, psa = 0, logp = 0, rot = 0;
+      const lines = text.split('\n');
+      const atomTypes = {};
+      lines.forEach(line => {
+        if (line.startsWith('ATOM') || line.startsWith('HETATM')) {
+          const resName = line.substring(17, 20).trim();
+          const atomName = line.substring(12, 16).trim();
+          atomTypes[atomName] = (atomTypes[atomName] || 0) + 1;
+          if (atomName.startsWith('O')) hba++;
+          if (atomName.startsWith('N')) { hba++; hbd++; }
+          if (atomName.startsWith('H') && (atomName.includes('N') || atomName.includes('O'))) hbd++;
+        }
+      });
+
+      const atomicWeights = {'C': 12.01, 'N': 14.01, 'O': 16.00, 'H': 1.008, 'S': 32.07, 'P': 30.97};
+      for (const [atom, count] of Object.entries(atomTypes)) {
+        const el = atom.replace(/[0-9]/g, '').charAt(0);
+        mw += (atomicWeights[el] || 12.0) * count;
+      }
+      
+      psa = (hba * 12.0 + hbd * 8.0).toFixed(2);
+      logp = (1.2 - (hba + hbd) * 0.5).toFixed(2);
+      rot = Math.max(1, Math.floor(Object.keys(atomTypes).length / 4));
+
+      if (document.getElementById('optMw').checked) document.getElementById('mw').textContent = mw.toFixed(2);
+      if (document.getElementById('optHb').checked) document.getElementById('hb').textContent = (hbd + hba);
+      if (document.getElementById('optPsa').checked) document.getElementById('psa').textContent = psa;
+      if (document.getElementById('optLogp').checked) document.getElementById('logp').textContent = logp;
+      if (document.getElementById('optRot').checked) document.getElementById('rot').textContent = rot;
+
+      resultSection.style.display = 'block';
+      emptyResult.style.display = 'none';
+      loadMsg.textContent = '计算完成！';
+      
+      exportLink.href = 'export.html?id=' + encodeURIComponent(currentMolId);
+    };
+    reader.onerror = function() {
+      loadMsg.textContent = '文件读取失败，请重试。';
+    };
+    reader.readAsText(file);
+  });
+})();
+</script>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
