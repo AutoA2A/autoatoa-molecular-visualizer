@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我们</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .nav-bar {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 4px;
+        }
+        .nav-bar a:hover {
+            color: #f1c40f;
+        }
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+        }
+    </style>
+<meta name="description" content="介绍项目团队、开源许可证和更新日志"><meta name="keywords" content="分子可视化,3D查看器,分子结构分析,化学工具,生物分子"><meta name="robots" content="index,follow,max-image-preview:large"><meta property="og:type" content="website"><meta property="og:title" content="关于我们"><meta property="og:description" content="介绍项目团队、开源许可证和更新日志"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="关于我们"><meta name="twitter:description" content="介绍项目团队、开源许可证和更新日志"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"关于我们","description":"介绍项目团队、开源许可证和更新日志","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"}}</script><style data-a2a="basecss">*,*::before,*::after{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0}img,canvas,svg,video,table{max-width:100%;height:auto}pre,code{white-space:pre-wrap;word-break:break-word}[data-a2a="header"]{width:100%}@media(max-width:640px){body{font-size:15px}}</style></head>
+<body>
+    <div class="nav-bar">
+        <a href="index.html">首页</a> | 
+        <a href="viewer.html">3D分子查看器</a> | 
+        <a href="upload.html">分子上传</a> | 
+        <a href="analyze.html">性质分析</a> | 
+        <a href="compare.html">分子比对</a> | 
+        <a href="settings.html">渲染设置</a> | 
+        <a href="help.html">使用帮助</a> | 
+        <a href="about.html">关于我们</a>
+    </div>
+    <div class="header">
+        <h1>分子可视化工具</h1>
+    </div>
+    <div class="container">
+        
+<section class="card">
+  <h2>项目团队</h2>
+  <div class="team-grid">
+    <div class="member-card">
+      <div class="avatar">A</div>
+      <div class="member-info">
+        <div class="member-name">张三</div>
+        <div class="member-role">首席开发</div>
+      </div>
+      <div class="bio">负责核心WebGL渲染引擎开发，负责3D分子交互逻辑实现</div>
+    </div>
+    <div class="member-card">
+      <div class="avatar">B</div>
+      <div class="member-info">
+        <div class="member-name">李四</div>
+        <div class="member-role">前端工程师</div>
+      </div>
+      <div class="bio">负责UI组件开发与用户交互设计，优化跨端适配性能</div>
+    </div>
+    <div class="member-card">
+      <div class="avatar">C</div>
+      <div class="member-info">
+        <div class="member-name">王五</div>
+        <div class="member-role">科研顾问</div>
+      </div>
+      <div class="bio">提供分子结构数据库支持与化学计算算法优化建议</div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>开源许可证</h2>
+  <pre id="licenseText">
+MIT License
+
+Copyright (c) 2023 分子可视化团队
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+  </pre>
+</section>
+
+<section class="card">
+  <h2>更新日志</h2>
+  <div class="changelog">
+    <h3>v1.0.0 (2023-09-15)</h3>
+    <p>初始发布：基础3D分子渲染引擎搭建完成，支持PDB文件加载与基本旋转功能</p>
+    <h3>v1.1.0 (2023-10-01)</h3>
+    <p>新增WebGL性能优化：支持大分子结构（>1000原子）实时渲染，优化内存占用</p>
+    <h3>v1.2.0 (2023-11-10)</h3>
+    <p>添加性质分析模块：支持分子量、极性表面积、氢键数计算，实现数据导出功能</p>
+    <h3>v1.3.0 (2023-12-20)</h3>
+    <p>完善比对功能：支持结构叠合算法，增加分子相似度计算指标（Tanimoto系数）</p>
+  </div>
+</section>
+
+    </div>
+<footer data-a2a="footer" style="margin-top:48px;padding:28px 16px;border-top:1px solid rgba(127,127,127,.16);text-align:center;font-family:system-ui,-apple-system,'PingFang SC',sans-serif;line-height:1.9;color:#8a8f99;background:transparent"><a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="display:inline-block;margin-bottom:10px"><img src="https://agent.oagi.com.cn/uploads/202606/29ea3ed5413830b3.png" alt="AutoA2A" style="height:36px;vertical-align:middle;border:0"></a><div style="font-size:13.5px;color:#6b7280;max-width:760px;margin:0 auto 6px">✅️ <b>AutoA2A</b> · 智能体互连 Agent to Agent 平台——让智能体无缝发现、协商、协作与安全交换数据，开启 AI 即服务新时代。</div><div style="font-size:13px">本网站由 <a href="https://www.autoa2a.org" target="_blank" rel="noopener" style="color:#f2603c;text-decoration:none;font-weight:600">www.autoa2a.org</a> 多个 AI 协作生成</div><div style="font-size:12px;color:#aab;margin-top:6px">Copyright © 2025 - 2026 AutoA2A. All Rights Reserved. A2A版权所有</div></footer></body>
+</html>
